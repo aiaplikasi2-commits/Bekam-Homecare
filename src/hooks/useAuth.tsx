@@ -10,14 +10,15 @@ import {
   signInWithPopup
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { isEmailAllowed, addAllowedAdminEmail } from '../services/dataService';
 
 export function formatAuthError(error: any): string {
   const code = error?.code || '';
   if (code === 'auth/popup-closed-by-user') {
     return 'Jendela login Google ditutup sebelum selesai.';
   }
-  if (code === 'auth/popup-blocked') {
-    return 'Pop-up diblokir oleh browser. Harap izinkan pop-up di browser Anda.';
+  if (code === 'auth/unauthorized-domain') {
+    return 'Domain ini belum diizinkan oleh Firebase. Silakan tambahkan domain Anda di Firebase Console -> Authentication -> Settings -> Authorized Domains.';
   }
   if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
     return 'Email atau password yang Anda masukkan tidak sesuai.';
@@ -54,8 +55,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        const allowed = await isEmailAllowed(currentUser.email);
+        if (allowed) {
+          setUser(currentUser);
+        } else {
+          console.warn(`Akses ditolak untuk email ${currentUser.email}: Bukan Admin Terdaftar.`);
+          await firebaseSignOut(auth);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -63,16 +75,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginEmail = async (email: string, pass: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
-    } catch (error) {
+      const allowed = await isEmailAllowed(email);
+      if (!allowed) {
+        throw new Error(`Akses Ditolak: Email (${email}) tidak terdaftar sebagai Admin. Hanya akun terapis resmi yang diizinkan masuk.`);
+      }
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      const userAllowed = await isEmailAllowed(cred.user.email);
+      if (!userAllowed) {
+        await firebaseSignOut(auth);
+        throw new Error(`Akses Ditolak: Email (${cred.user.email}) tidak memiliki izin Admin.`);
+      }
+    } catch (error: any) {
+      if (error.message?.startsWith('Akses Ditolak')) throw error;
       throw new Error(formatAuthError(error));
     }
   };
 
   const registerEmail = async (email: string, pass: string) => {
     try {
+      // Registering new admin is only allowed if email is pre-authorized
+      const allowed = await isEmailAllowed(email);
+      if (!allowed) {
+        throw new Error(`Akses Ditolak: Email (${email}) tidak diizinkan membuat akun Admin. Kontak pemilik website untuk meminta akses.`);
+      }
       await createUserWithEmailAndPassword(auth, email, pass);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message?.startsWith('Akses Ditolak')) throw error;
       throw new Error(formatAuthError(error));
     }
   };
@@ -80,8 +108,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
+      const result = await signInWithPopup(auth, provider);
+      const userAllowed = await isEmailAllowed(result.user.email);
+      if (!userAllowed) {
+        await firebaseSignOut(auth);
+        throw new Error(`Akses Ditolak: Email Google (${result.user.email}) tidak terdaftar sebagai Admin Website ini. Kontak pemilik website untuk mendaftarkan email Anda.`);
+      }
+    } catch (error: any) {
+      if (error.message?.startsWith('Akses Ditolak')) throw error;
       throw new Error(formatAuthError(error));
     }
   };
@@ -97,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await firebaseSignOut(auth);
+      setUser(null);
     } catch (error) {
       console.warn('Logout error:', error);
     }

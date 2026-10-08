@@ -548,3 +548,72 @@ export async function restoreFullDatabaseBackup(backupJsonData: any) {
     }
   }
 }
+
+// ALLOWED ADMIN EMAILS (RESTRICTED ADMIN ACCESS)
+const PRIMARY_OWNER_EMAIL = 'jamurtv69@gmail.com';
+
+export async function getAllowedAdminEmails(): Promise<string[]> {
+  const defaultAdmins = [PRIMARY_OWNER_EMAIL];
+  try {
+    const docRef = doc(db, 'settings', 'allowed_admins');
+    const snap = await getDoc(docRef);
+    if (snap.exists() && Array.isArray(snap.data()?.emails)) {
+      const stored: string[] = snap.data().emails;
+      const merged = Array.from(new Set([...defaultAdmins, ...stored]));
+      return merged;
+    } else {
+      await setDoc(docRef, { emails: defaultAdmins, updatedAt: new Date().toISOString() }, { merge: true });
+      return defaultAdmins;
+    }
+  } catch (error) {
+    console.warn('getAllowedAdminEmails notice:', error);
+    return defaultAdmins;
+  }
+}
+
+export async function addAllowedAdminEmail(email: string): Promise<string[]> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return await getAllowedAdminEmails();
+  
+  try {
+    const current = await getAllowedAdminEmails();
+    if (!current.includes(normalized)) {
+      const updated = [...current, normalized];
+      const docRef = doc(db, 'settings', 'allowed_admins');
+      await setDoc(docRef, { emails: updated, updatedAt: new Date().toISOString() }, { merge: true });
+      return updated;
+    }
+    return current;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, 'settings/allowed_admins');
+    return await getAllowedAdminEmails();
+  }
+}
+
+export async function removeAllowedAdminEmail(email: string): Promise<string[]> {
+  const normalized = email.trim().toLowerCase();
+  if (normalized === PRIMARY_OWNER_EMAIL) {
+    throw new Error(`Email pemilik utama (${PRIMARY_OWNER_EMAIL}) tidak dapat dihapus.`);
+  }
+  
+  try {
+    const current = await getAllowedAdminEmails();
+    const updated = current.filter(e => e.toLowerCase() !== normalized);
+    const docRef = doc(db, 'settings', 'allowed_admins');
+    await setDoc(docRef, { emails: updated, updatedAt: new Date().toISOString() }, { merge: true });
+    return updated;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, 'settings/allowed_admins');
+    return await getAllowedAdminEmails();
+  }
+}
+
+export async function isEmailAllowed(email: string | null | undefined): Promise<boolean> {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  if (normalized === PRIMARY_OWNER_EMAIL) return true;
+  
+  const allowed = await getAllowedAdminEmails();
+  if (allowed.length === 0) return true;
+  return allowed.some(e => e.toLowerCase() === normalized);
+}

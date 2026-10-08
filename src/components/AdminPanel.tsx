@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { AdminAccessTab } from './AdminAccessTab';
 import type {
   TherapistProfile,
   Service,
@@ -38,6 +39,7 @@ import {
 } from '../services/dataService';
 import {
   Shield,
+  ShieldCheck,
   LogOut,
   User,
   Sparkles,
@@ -102,7 +104,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // Admin Tab selection
   const [adminTab, setAdminTab] = useState<
-    'overview' | 'profile' | 'services' | 'bookings' | 'activities' | 'gallery' | 'articles' | 'testimonials' | 'areas' | 'contact' | 'backup'
+    'overview' | 'profile' | 'services' | 'bookings' | 'activities' | 'gallery' | 'articles' | 'testimonials' | 'areas' | 'contact' | 'backup' | 'admins'
   >('overview');
 
   // Visitor Stats
@@ -165,8 +167,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {authMode === 'register' && 'Daftar Akun Terapis'}
             {authMode === 'forgot' && 'Reset Password'}
           </h2>
-          <p className="mt-1 text-xs text-slate-500">
-            Akses khusus terapis untuk mengelola profil, jadwal booking, dan konten.
+          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[11px] font-bold border border-amber-200 dark:border-amber-800">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Terkunci Khusus Pemilik Website</span>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            Akses khusus pemilik terapis untuk mengelola profil, layanan, jadwal booking, dan konten.
           </p>
         </div>
 
@@ -251,14 +257,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <span>Masuk Dengan Google</span>
         </button>
 
-        <div className="mt-6 flex items-center justify-between text-xs text-emerald-700 font-semibold">
+        <div className="mt-6 flex items-center justify-center text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
           {authMode === 'login' ? (
-            <>
-              <button onClick={() => setAuthMode('register')} className="hover:underline">Daftar Akun</button>
-              <button onClick={() => setAuthMode('forgot')} className="hover:underline">Lupa Password?</button>
-            </>
+            <button onClick={() => setAuthMode('forgot')} className="hover:underline flex items-center gap-1">
+              <Lock className="w-3.5 h-3.5" />
+              Lupa Password Anda?
+            </button>
           ) : (
-            <button onClick={() => setAuthMode('login')} className="hover:underline mx-auto">Kembali ke Form Login</button>
+            <button onClick={() => setAuthMode('login')} className="hover:underline">Kembali ke Form Login</button>
           )}
         </div>
       </div>
@@ -402,6 +408,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <Download className="w-4 h-4" />
           <span>Backup & Export</span>
         </button>
+
+        <button
+          onClick={() => setAdminTab('admins')}
+          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold shrink-0 transition ${
+            adminTab === 'admins' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span>Akses Admin</span>
+        </button>
       </div>
 
       {/* TAB CONTENT: OVERVIEW */}
@@ -466,6 +482,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       {/* TAB CONTENT: BACKUP & EXPORT */}
       {adminTab === 'backup' && (
         <AdminBackupTab bookings={bookings} onRefreshData={onRefreshData} />
+      )}
+
+      {/* TAB CONTENT: AKSES ADMIN */}
+      {adminTab === 'admins' && (
+        <AdminAccessTab userEmail={user.email || ''} />
       )}
 
     </div>
