@@ -50,11 +50,48 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Permanent Fixed Admin Credentials
+const FIXED_ADMIN_USERNAME = 'nedi_bekam';
+const FIXED_ADMIN_PASS = '021985Mur';
+const FIXED_ADMIN_EMAIL = 'jamurtv69@gmail.com';
+
+const FIXED_ADMIN_USER = {
+  uid: 'fixed_admin_nedi_bekam',
+  email: FIXED_ADMIN_EMAIL,
+  displayName: 'Nedi_bekam (Admin Utama)',
+  emailVerified: true,
+  isAnonymous: false,
+  metadata: {},
+  providerData: [],
+  refreshToken: '',
+  tenantId: null,
+  delete: async () => {},
+  getIdToken: async () => 'mock-token',
+  getIdTokenResult: async () => ({
+    authTime: '',
+    expirationTime: '',
+    issuedAtTime: '',
+    signInProvider: null,
+    signInSecondFactor: null,
+    token: '',
+    claims: {}
+  }),
+  reload: async () => {},
+  toJSON: () => ({})
+} as unknown as User;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const isLocalAdmin = localStorage.getItem('nedi_bekam_admin_active') === 'true';
+    if (isLocalAdmin) {
+      setUser(FIXED_ADMIN_USER);
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         const allowed = await isEmailAllowed(currentUser.email);
@@ -73,17 +110,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const loginEmail = async (email: string, pass: string) => {
+  const loginEmail = async (inputUserOrEmail: string, pass: string) => {
+    const cleanInput = inputUserOrEmail.trim().toLowerCase();
+    const isFixedUsername =
+      cleanInput === FIXED_ADMIN_USERNAME ||
+      cleanInput === 'nedi_bekam' ||
+      cleanInput === FIXED_ADMIN_EMAIL;
+    const isFixedPassword = pass === FIXED_ADMIN_PASS;
+
+    if (isFixedUsername && isFixedPassword) {
+      localStorage.setItem('nedi_bekam_admin_active', 'true');
+      setUser(FIXED_ADMIN_USER);
+      return;
+    }
+
+    if (!isFixedUsername) {
+      throw new Error(
+        `Akses Ditolak: Username "${inputUserOrEmail}" tidak terdaftar. Hanya Username "Nedi_bekam" yang diizinkan masuk.`
+      );
+    }
+
+    if (!isFixedPassword) {
+      throw new Error(`Akses Ditolak: Password yang Anda masukkan salah.`);
+    }
+
     try {
-      const allowed = await isEmailAllowed(email);
+      const allowed = await isEmailAllowed(inputUserOrEmail);
       if (!allowed) {
-        throw new Error(`Akses Ditolak: Email (${email}) tidak terdaftar sebagai Admin. Hanya akun terapis resmi yang diizinkan masuk.`);
+        throw new Error(
+          `Akses Ditolak: Hanya Username "Nedi_bekam" yang diizinkan masuk.`
+        );
       }
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      const cred = await signInWithEmailAndPassword(auth, inputUserOrEmail, pass);
       const userAllowed = await isEmailAllowed(cred.user.email);
       if (!userAllowed) {
         await firebaseSignOut(auth);
-        throw new Error(`Akses Ditolak: Email (${cred.user.email}) tidak memiliki izin Admin.`);
+        throw new Error(`Akses Ditolak: Akses dikunci khusus Nedi_bekam.`);
       }
     } catch (error: any) {
       if (error.message?.startsWith('Akses Ditolak')) throw error;
@@ -91,18 +153,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const registerEmail = async (email: string, pass: string) => {
-    try {
-      // Registering new admin is only allowed if email is pre-authorized
-      const allowed = await isEmailAllowed(email);
-      if (!allowed) {
-        throw new Error(`Akses Ditolak: Email (${email}) tidak diizinkan membuat akun Admin. Kontak pemilik website untuk meminta akses.`);
-      }
-      await createUserWithEmailAndPassword(auth, email, pass);
-    } catch (error: any) {
-      if (error.message?.startsWith('Akses Ditolak')) throw error;
-      throw new Error(formatAuthError(error));
-    }
+  const registerEmail = async () => {
+    throw new Error('Akses Ditolak: Pendaftaran akun baru ditutup oleh sistem. Website ini terkunci khusus Admin Nedi_bekam.');
   };
 
   const loginGoogle = async () => {
@@ -112,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userAllowed = await isEmailAllowed(result.user.email);
       if (!userAllowed) {
         await firebaseSignOut(auth);
-        throw new Error(`Akses Ditolak: Email Google (${result.user.email}) tidak terdaftar sebagai Admin Website ini. Kontak pemilik website untuk mendaftarkan email Anda.`);
+        throw new Error(`Akses Ditolak: Email Google (${result.user.email}) tidak memiliki akses. Hanya Nedi_bekam yang diizinkan.`);
       }
     } catch (error: any) {
       if (error.message?.startsWith('Akses Ditolak')) throw error;
@@ -130,6 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      localStorage.removeItem('nedi_bekam_admin_active');
       await firebaseSignOut(auth);
       setUser(null);
     } catch (error) {

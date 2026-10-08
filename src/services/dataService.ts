@@ -559,8 +559,8 @@ export async function getAllowedAdminEmails(): Promise<string[]> {
     const snap = await getDoc(docRef);
     if (snap.exists() && Array.isArray(snap.data()?.emails)) {
       const stored: string[] = snap.data().emails;
-      const merged = Array.from(new Set([...defaultAdmins, ...stored]));
-      return merged;
+      const merged = Array.from(new Set([...defaultAdmins, ...stored.map(e => e.trim().toLowerCase())]));
+      return merged.length > 0 ? merged : defaultAdmins;
     } else {
       await setDoc(docRef, { emails: defaultAdmins, updatedAt: new Date().toISOString() }, { merge: true });
       return defaultAdmins;
@@ -614,6 +614,5 @@ export async function isEmailAllowed(email: string | null | undefined): Promise<
   if (normalized === PRIMARY_OWNER_EMAIL) return true;
   
   const allowed = await getAllowedAdminEmails();
-  if (allowed.length === 0) return true;
   return allowed.some(e => e.toLowerCase() === normalized);
 }
