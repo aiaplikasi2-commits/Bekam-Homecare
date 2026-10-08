@@ -1,0 +1,184 @@
+{
+  "entities": {
+    "TherapistProfile": {
+      "title": "TherapistProfile",
+      "description": "Profil lengkap terapis, foto, sertifikat, visi misi, dan banner beranda",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "photoUrl": { "type": "string", "maxLength": 500 },
+        "experienceYears": { "type": "string", "maxLength": 50 },
+        "certificates": { "type": "array" },
+        "expertise": { "type": "array" },
+        "bio": { "type": "string", "maxLength": 2000 },
+        "vision": { "type": "string", "maxLength": 1000 },
+        "mission": { "type": "string", "maxLength": 1000 },
+        "bannerTitle": { "type": "string", "maxLength": 200 },
+        "bannerSubtitle": { "type": "string", "maxLength": 500 },
+        "bannerPhotoUrl": { "type": "string", "maxLength": 500 },
+        "ctaText": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Service": {
+      "title": "Service",
+      "description": "Layanan bekam, pijat, dan kesehatan tradisional",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "photoUrl": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "durationMinutes": { "type": "number" },
+        "priceRp": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "durationMinutes", "priceRp"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "Kegiatan terapis / mini social feed",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "photos": { "type": "array" },
+        "activityDate": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "activityDate"]
+    },
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "Foto galeri berdasarkan kategori",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 100 },
+        "photoUrl": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "category", "photoUrl"]
+    },
+    "Article": {
+      "title": "Article",
+      "description": "Artikel edukasi kesehatan",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "imageUrl": { "type": "string", "maxLength": 500 },
+        "content": { "type": "string", "maxLength": 10000 },
+        "category": { "type": "string", "maxLength": 100 },
+        "publishedDate": { "type": "string", "maxLength": 50 },
+        "isDraft": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "content", "publishedDate"]
+    },
+    "Testimonial": {
+      "title": "Testimonial",
+      "description": "Testimoni dan ulasan pelanggan",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string", "maxLength": 100 },
+        "photoUrl": { "type": "string", "maxLength": 500 },
+        "rating": { "type": "number" },
+        "reviewText": { "type": "string", "maxLength": 1000 },
+        "date": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["clientName", "rating", "reviewText"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Pemesanan layanan online oleh pelanggan",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string", "maxLength": 100 },
+        "whatsappNumber": { "type": "string", "maxLength": 30 },
+        "address": { "type": "string", "maxLength": 500 },
+        "serviceId": { "type": "string", "maxLength": 100 },
+        "serviceName": { "type": "string", "maxLength": 100 },
+        "bookingDate": { "type": "string", "maxLength": 50 },
+        "bookingTime": { "type": "string", "maxLength": 50 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["clientName", "whatsappNumber", "address", "serviceName", "bookingDate", "bookingTime"]
+    },
+    "ServiceArea": {
+      "title": "ServiceArea",
+      "description": "Wilayah jangkauan dan radius layanan",
+      "type": "object",
+      "properties": {
+        "districtName": { "type": "string", "maxLength": 150 },
+        "radiusKm": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "mapEmbedUrl": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["districtName", "radiusKm"]
+    },
+    "ContactInfo": {
+      "title": "ContactInfo",
+      "description": "Kontak resmi dan akun media sosial terapis",
+      "type": "object",
+      "properties": {
+        "whatsappNumber": { "type": "string", "maxLength": 30 },
+        "phoneNumber": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 500 },
+        "googleMapsUrl": { "type": "string", "maxLength": 1000 },
+        "instagram": { "type": "string", "maxLength": 200 },
+        "facebook": { "type": "string", "maxLength": 200 },
+        "tiktok": { "type": "string", "maxLength": 200 },
+        "youtube": { "type": "string", "maxLength": 200 },
+        "updatedAt": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/therapistProfile/{profileId}": {
+      "schema": "TherapistProfile",
+      "description": "Dokumen profil terapis dan banner"
+    },
+    "/services/{serviceId}": {
+      "schema": "Service",
+      "description": "Daftar layanan terapis"
+    },
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Kegiatan terapis"
+    },
+    "/gallery/{galleryId}": {
+      "schema": "GalleryItem",
+      "description": "Galeri foto"
+    },
+    "/articles/{articleId}": {
+      "schema": "Article",
+      "description": "Artikel kesehatan"
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": "Testimonial",
+      "description": "Testimoni pelanggan"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Pemesanan booking online"
+    },
+    "/serviceAreas/{areaId}": {
+      "schema": "ServiceArea",
+      "description": "Wilayah jangkauan layanan"
+    },
+    "/contactInfo/{contactId}": {
+      "schema": "ContactInfo",
+      "description": "Informasi kontak dan media sosial"
+    },
+    "/visitorStats/{statId}": {
+      "schema": { "$ref": "#/entities/TherapistProfile" },
+      "description": "Statistik pengunjung website"
+    }
+  }
+}

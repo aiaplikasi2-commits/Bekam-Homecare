@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Default catch-all deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Therapist Profile & Banner
+    match /therapistProfile/{profileId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Services
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Activities (Social Feed)
+    match /activities/{activityId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Gallery Items
+    match /gallery/{galleryId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Articles
+    match /articles/{articleId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Testimonials
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Bookings (Public create, Admin read/update/delete)
+    match /bookings/{bookingId} {
+      allow create: if request.resource.data.clientName is string
+                    && request.resource.data.whatsappNumber is string
+                    && request.resource.data.address is string;
+      allow read, update, delete: if isSignedIn();
+    }
+
+    // Service Coverage Areas
+    match /serviceAreas/{areaId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Contact & Social Media Info
+    match /contactInfo/{contactId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Visitor Stats Counter
+    match /visitorStats/{statId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isSignedIn();
+    }
+  }
+}

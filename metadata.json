@@ -1,0 +1,6 @@
+{
+  "name": "Terapis Bekam & Pijat Panggilan",
+  "description": "Website Profesional & Progressive Web App (PWA) khusus Terapis Bekam dan Pijat Panggilan Perorangan dengan Sistem Booking Online, Galeri, & Kalkulator Kesehatan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
