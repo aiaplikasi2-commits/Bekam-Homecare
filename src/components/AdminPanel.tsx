@@ -1342,13 +1342,23 @@ const AdminArticlesTab: React.FC<{ articles: Article[]; onRefreshData: () => voi
 
   const handleDelete = async (id: string) => {
     if (!confirm('Hapus artikel ini?')) return;
-    await deleteArticle(id);
-    onRefreshData();
+    try {
+      await deleteArticle(id);
+      onRefreshData();
+    } catch (err) {
+      console.error('Error deleting article:', err);
+      alert('Gagal menghapus artikel.');
+    }
   };
 
   const handleToggleDraft = async (id: string, currentDraft: boolean) => {
-    await updateArticle(id, { isDraft: !currentDraft });
-    onRefreshData();
+    try {
+      await updateArticle(id, { isDraft: !currentDraft });
+      onRefreshData();
+    } catch (err) {
+      console.error('Error toggling draft status:', err);
+      alert('Gagal mengubah status draft artikel.');
+    }
   };
 
   return (

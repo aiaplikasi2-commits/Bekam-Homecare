@@ -82,9 +82,9 @@ function AppContent() {
         getServices(),
         getActivities(),
         getGalleryItems(),
-        getArticles(user != null),
+        getArticles(true),
         getTestimonials(),
-        user ? getBookings() : Promise.resolve([]),
+        getBookings(),
         getServiceAreas(),
         getContactInfo(),
       ]);
@@ -739,6 +739,7 @@ function AppContent() {
               services={services}
               contactInfo={contactInfo}
               selectedServiceId={preSelectedServiceId}
+              onSuccess={loadAllData}
             />
           </div>
         )}

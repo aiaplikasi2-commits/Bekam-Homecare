@@ -24,13 +24,9 @@ import type {
   VisitorStats
 } from '../types';
 
-// Helper to filter documents for current logged-in user or active owner
+// Helper to return all documents for single-therapist site
 function filterByOwner<T extends { ownerId?: string }>(items: T[]): T[] {
-  const currentUid = auth.currentUser?.uid;
-  if (!currentUid) return items; // Public visitors see all published items
-  // If logged in as admin, prefer items belonging to currentUid or items without ownerId
-  const userItems = items.filter(item => !item.ownerId || item.ownerId === currentUid);
-  return userItems.length > 0 ? userItems : items;
+  return items;
 }
 
 // THERAPIST PROFILE
@@ -215,8 +211,7 @@ export async function getArticles(includeDrafts = false): Promise<Article[]> {
     const colRef = collection(db, 'articles');
     const snap = await getDocs(colRef);
     const articles = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Article & { ownerId?: string }));
-    const filteredByOwner = filterByOwner(articles);
-    const filtered = includeDrafts && auth.currentUser ? filteredByOwner : filteredByOwner.filter(a => !a.isDraft);
+    const filtered = includeDrafts ? articles : articles.filter(a => !a.isDraft);
     return filtered.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   } catch (error) {
     console.warn('getArticles notice:', error);
@@ -307,7 +302,7 @@ export async function createBooking(data: Omit<Booking, 'id' | 'status' | 'creat
   const path = 'bookings';
   try {
     const colRef = collection(db, 'bookings');
-    const uid = auth.currentUser?.uid || '';
+    const uid = auth.currentUser?.uid || 'public_visitor';
     const res = await addDoc(colRef, {
       ...data,
       ownerId: uid,
@@ -323,12 +318,10 @@ export async function createBooking(data: Omit<Booking, 'id' | 'status' | 'creat
 
 export async function getBookings(): Promise<Booking[]> {
   try {
-    if (!auth.currentUser) return [];
     const colRef = collection(db, 'bookings');
     const snap = await getDocs(colRef);
     const list = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Booking & { ownerId?: string }));
-    const filtered = filterByOwner(list);
-    return filtered.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    return list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   } catch (error) {
     console.warn('getBookings notice:', error);
     return [];
